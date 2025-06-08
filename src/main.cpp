@@ -1,83 +1,48 @@
 // Copyright 2022 NNTU-CS
-#include "tree.h"
-
+#include <algorithm>
 #include <chrono>
-#include <cstdlib>
-#include <fstream>
+#include <iomanip>
 #include <iostream>
-#include <locale>
 #include <random>
 #include <vector>
 
-void PrintVector(const std::vector<char>& vec) {
-  for (char c : vec) {
-    std::cout << c;
-  }
-  std::cout << std::endl;
-}
-
-void RunExperiment() {
-  std::ofstream data_file("experiment_data.csv");
-  data_file << "n,AllPerms(µs),GetPerm1(µs),GetPerm2(µs)\n";
-
-  for (int n = 1; n <= 8; ++n) {
-    std::vector<char> elements;
-    for (int i = 0; i < n; ++i) {
-      elements.push_back('1' + i);
-    }
-
-    PMTree tree(elements);
-
-    auto start = std::chrono::high_resolution_clock::now();
-    auto all_perms = GetAllPerms(tree);
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration_all = std::chrono::duration_cast<std::chrono::microseconds>(
-        end - start).count();
-
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> distr(1, tree.GetTotalPermutations());
-    int random_num = distr(gen);
-
-    start = std::chrono::high_resolution_clock::now();
-    auto perm1 = GetPerm1(tree, random_num);
-    end = std::chrono::high_resolution_clock::now();
-    auto duration_perm1 = std::chrono::duration_cast<std::chrono::microseconds>(
-        end - start).count();
-
-    start = std::chrono::high_resolution_clock::now();
-    auto perm2 = GetPerm2(tree, random_num);
-    end = std::chrono::high_resolution_clock::now();
-    auto duration_perm2 = std::chrono::duration_cast<std::chrono::microseconds>(
-        end - start).count();
-
-    data_file << n << "," << duration_all << "," << duration_perm1 << ","
-              << duration_perm2 << "\n";
-    std::cout << "n=" << n << " | AllPerms: " << duration_all << "µs"
-              << " | GetPerm1: " << duration_perm1 << "µs"
-              << " | GetPerm2: " << duration_perm2 << "µs" << std::endl;
-  }
-  data_file.close();
-}
+#include "tree.h"
 
 int main() {
-  std::vector<char> in = {'1', '2', '3'};
-  PMTree tree(in);
-
-  std::cout << "All permutations:" << std::endl;
-  auto perms = GetAllPerms(tree);
-  for (const auto& perm : perms) {
-    PrintVector(perm);
+  std::vector<int> sizes{1, 2, 3, 4, 5, 6, 7};
+  std::mt19937 gen(std::random_device{}());
+  std::cout << std::fixed << std::setprecision(3);
+  std::cout << "n\tall(ms)\tperm1(ms)\tperm2(ms)\n";
+  for (int n : sizes) {
+    std::vector<char> in;
+    for (int i = 0; i < n; ++i) in.push_back('A' + i);
+    PMTree tree(in);
+    int total = tree.countPermutations();
+    std::uniform_int_distribution<> dist(1, total);
+    auto t0 = std::chrono::high_resolution_clock::now();
+    auto a = getAllPerms(tree);
+    auto t1 = std::chrono::high_resolution_clock::now();
+    auto d_all =
+        std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count() /
+        1000.0;
+    t0 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < 10; ++i) getPerm1(tree, dist(gen));
+    t1 = std::chrono::high_resolution_clock::now();
+    auto d_p1 =
+        std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count() /
+        10000.0;
+    t0 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < 10; ++i) getPerm2(tree, dist(gen));
+    t1 = std::chrono::high_resolution_clock::now();
+    auto d_p2 =
+        std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count() /
+        10000.0;
+    std::cout << n << '\t' << d_all << '\t' << d_p1 << '\t' << d_p2 << '\n';
   }
-
-  std::cout << "\nPermutation #2 (GetPerm1): ";
-  PrintVector(GetPerm1(tree, 2));
-
-  std::cout << "Permutation #2 (GetPerm2): ";
-  PrintVector(GetPerm2(tree, 2));
-
-  std::cout << "\nRunning experiment..." << std::endl;
-  RunExperiment();
-
-  return 0;
+  std::vector<char> demo{'1', '2', '3'};
+  PMTree demo_tree(demo);
+  for (const auto& p : getAllPerms(demo_tree)) {
+    for (char c : p) std::cout << c;
+    std::cout << '\n';
+  }
 }
