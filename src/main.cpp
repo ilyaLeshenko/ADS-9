@@ -10,7 +10,7 @@
 
 int main() {
   std::vector<int> sizes{1, 2, 3, 4, 5, 6, 7};
-  std::mt19937 gen(std::random_device{}());
+  std::mt19937 gen(std::random_device{ }());
   std::cout << std::fixed << std::setprecision(3);
   std::cout << "n\tall(ms)\tperm1(ms)\tperm2(ms)\n";
   for (int n : sizes) {
