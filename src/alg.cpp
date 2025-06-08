@@ -1,5 +1,8 @@
 // Copyright 2022 NNTU-CS
 #include <algorithm>
+#include <vector>
+#include <memory>
+#include <utility>
 
 #include "tree.h"
 
